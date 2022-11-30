@@ -2,19 +2,29 @@ import React, { useState, useEffect } from 'react'
 import { get, child, ref, remove, update } from 'firebase/database'
 import { ref as storageRef, deleteObject } from 'firebase/storage'
 import { Link } from 'react-router-dom'
-import database from '../utils/database'
-import storage from '../utils/storage'
+import database from '../../utils/database'
+import storage from '../../utils/storage'
 import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
-
-
+import auth from '../../utils/auth'
+import { useAuthState } from "react-firebase-hooks/auth";
 
 export default function ToDoBody() {
     const [loading, setLoading] = useState(true);
     const [todo, setTodo] = useState({});
+    const [user, userLoading] = useAuthState(auth);
+
+    useEffect(() => {
+        if (userLoading) {
+            return;
+        }
+    })
     const navigate = useNavigate();
     useEffect(() => {
         setLoading(true);
+        if (!user) {
+            navigate('/dashboard')
+        }
         get(child(ref(database), 'todo'))
             .then((snapshot) => {
                 if (snapshot.exists()) {
@@ -26,7 +36,7 @@ export default function ToDoBody() {
             .catch((error) => {
                 console.error(error);
             }).finally(setLoading(false));
-    }, []);
+    }, [user]);
 
     /**
      * Handling updateing of a small text about days left. 

@@ -1,9 +1,12 @@
 import React from 'react'
-import ToDoBody from './ToDoBody'
-import ToDoHeader from './ToDoHeader'
+import ToDoBody from '../ToDo/ToDoBody'
+import ToDoHeader from '../ToDo/ToDoHeader'
 import { Link } from 'react-router-dom'
-export default function ToDoList() {
+import { useAuthState } from "react-firebase-hooks/auth";
+import auth from '../../utils/auth'
 
+export default function ToDoList() {
+    const [user, loading, error] = useAuthState(auth);
     return (
         <div className="row d-flex">
             <ToDoHeader />

@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { get, ref, child, update } from 'firebase/database'
 import { ref as storageRef, deleteObject } from "firebase/storage";
-import database from '../utils/database'
-import storage from '../utils/storage'
+import database from '../../utils/database'
+import storage from '../../utils/storage'
 import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
 
