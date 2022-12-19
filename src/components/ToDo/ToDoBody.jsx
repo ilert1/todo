@@ -1,48 +1,12 @@
-import React, { useState, useEffect } from 'react'
-import { get, child, ref, remove, update } from 'firebase/database'
-import { ref as storageRef, deleteObject } from 'firebase/storage'
+import React from 'react'
 import { Link } from 'react-router-dom'
-import database from '../../utils/database'
-import storage from '../../utils/storage'
 import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
-import auth from '../../utils/auth'
-import { useAuthState } from "react-firebase-hooks/auth";
+import { useTodo } from '../../hooks/useTodo'
 
 export default function ToDoBody() {
-    const [loading, setLoading] = useState(true);
-    const [todo, setTodo] = useState({});
-    const [user, userLoading] = useAuthState(auth);
-
-    useEffect(() => {
-        if (userLoading) {
-            return;
-        }
-    })
+    const { todo, isLoading, onDelete, onComplete } = useTodo();
     const navigate = useNavigate();
-    useEffect(() => {
-        setLoading(true);
-        if (!user) {
-            navigate('/dashboard')
-        }
-        get(child(ref(database), 'todo'))
-            .then((snapshot) => {
-                if (snapshot.exists()) {
-                    setTodo(snapshot.val());
-                } else {
-                    console.log("No data available");
-                }
-            })
-            .catch((error) => {
-                console.error(error);
-            }).finally(setLoading(false));
-    }, [user]);
-
-    /**
-     * Handling updateing of a small text about days left. 
-     * @param {Object} tod 
-     * @returns String about how much days left or passed.
-     */
     const updateDateText = (tod) => {
         if (todo[tod]['done']) return "";
         const dateToCompare = dayjs(todo[tod]['date']);
@@ -57,12 +21,7 @@ export default function ToDoBody() {
             return `${diff} days left`;
         }
     }
-    /**
-     * Returns the color of the todoList item.
-     * @param {Number | Date} date 
-     * @param {Boolean} done 
-     * @returns 
-     */
+
     const getColor = (date, done) => {
         if (done === true) return 'RGBA(67,220,80,0.57)';
         const dateToCompare = dayjs(date);
@@ -76,48 +35,23 @@ export default function ToDoBody() {
         }
     }
 
-    /**
-     * Handling deleting of todoList item.
-     * @param {Event} e 
-     * @param {Object} tod 
-     */
+
     const handleDelete = (e, tod) => {
         e.preventDefault();
-        const ok = window.confirm("Are you sure want to delete a todo?");
-        if (!ok) return;
-        let newTodo = { ...todo };
-        delete (newTodo[tod]);
-        setTodo(newTodo);
-        remove(ref(database, `todo/${tod}`)).then(() => {
-            deleteObject(storageRef(storage, `files/${tod}`))
-        });
+        onDelete(tod);
     }
-    /**
-     * Handling marking of todoItem as completed.
-     * @param {Event} e 
-     * @param {Object} tod 
-     */
+
     const handleComplete = (e, tod) => {
         e.preventDefault();
-        if (todo[tod]['done']) {
-            alert('Todo is already done');
-            return;
-        }
-        const ok = window.confirm("Are you sure want to mark a todo as completed?");
-        if (!ok) return;
-        let newTodo = { ...todo };
-        newTodo[tod]['done'] = true;
-        setTodo(newTodo);
-        update(ref(database, `todo/${tod}`), {
-            done: true
-        });
+        onComplete(tod);
     }
 
 
-    if (loading) return (<div>Loading...</div>);
+    if (isLoading) return (<div>Loading...</div>);
     return (
         <div className="list-group d-flex justify-center align-items-center">
-            {Object.keys(todo).map(tod =>
+
+            {todo ? Object.keys(todo).map(tod =>
                 <Link key={tod} to={tod} className="list-group-item list-group-item-action" style={{ backgroundColor: getColor(todo[tod]['date'], todo[tod]['done']), }}>
                     <div className="d-flex w-100 justify-content-between">
                         <h5 className="mb-1 w-75">{todo[tod]['title']}</h5>
@@ -136,9 +70,9 @@ export default function ToDoBody() {
                             </button>
                         </div>
                     </div>
-                    <small className="text-muted">{todo[tod]['files'] ? todo[tod]['files'].length : 0} files here</small>
+                    <small className="text-muted">{todo[tod]['files'] ? todo[tod]['files'].length : 0} file(s) here</small>
                 </Link>
-            )}
+            ) : "There are no todos"}
         </div>
     )
 }

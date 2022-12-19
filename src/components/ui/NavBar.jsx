@@ -7,7 +7,6 @@ import { ref, child, get } from "firebase/database";
 import db from "../../utils/database";
 function NavBar() {
     const [user, loading] = useAuthState(auth);
-    const [admin, setAdmin] = useState(false);
     // eslint-disable-next-line no-unused-vars
     const [isLoading, setIsLoading] = useState(true);
 
@@ -28,15 +27,6 @@ function NavBar() {
             setIsLoading(false);
             return;
         }
-        get(child(ref(db, "/"), "admin")).then((snap) => {
-            if (snap.exists()) {
-                if (user.email === snap.val())
-                    setAdmin(true);
-                else
-                    setAdmin(false);
-            } else
-                setAdmin(false);
-        }).finally(setIsLoading(false));
     }, [user])
 
     return (
@@ -90,11 +80,6 @@ function NavBar() {
                             {user && <li className="nav-item">
                                 <Link className="nav-link" to="/userpage">
                                     UserPage
-                                </Link>
-                            </li>}
-                            {admin && <li className="nav-item">
-                                <Link className="nav-link" to="/admin">
-                                    AdminPage
                                 </Link>
                             </li>}
                         </ul>

@@ -6,16 +6,19 @@ import database from '../../utils/database'
 import storage from '../../utils/storage'
 import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
+import { useAuthState } from "react-firebase-hooks/auth";
+import auth from '../../utils/auth'
 
 export default function ToDoListItem() {
     const navigate = useNavigate();
     const { todoID } = useParams();
     const [loading, setLoading] = useState(true);
     const [todo, setTodo] = useState({});
+    const [user, userLoading] = useAuthState(auth);
 
     useEffect(() => {
         setLoading(true);
-        get(child(ref(database, 'todo'), todoID)).then((snapshot) => {
+        get(child(ref(database, `todo/${user.uid}`), todoID)).then((snapshot) => {
             console.log(snapshot.val());
             if (snapshot.exists()) {
                 setTodo(snapshot.val());
@@ -26,13 +29,9 @@ export default function ToDoListItem() {
             navigate('/');
             alert("Todo with this id is not exists. You will be redirected to the main page.");
         }).finally(setLoading(false));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [navigate, todoID])
 
-    /**
-     * Handling updateing of a small text about days left. 
-     * @param {Object} tod 
-     * @returns String about how much days left or passed.
-     */
     const updateDateText = (tod) => {
         if (tod['done']) return "Task is already done.";
         const dateToCompare = dayjs(todo['date']);
@@ -48,12 +47,6 @@ export default function ToDoListItem() {
         }
     }
 
-    /**
-     * Function to delete a file from the database.
-     * @param {Event} e 
-     * @param {String} fileName 
-     * @returns 
-     */
     const handleFileDelete = (e, fileName) => {
         e.preventDefault();
         const ok = window.confirm("Are you sure want to delete a file?");
@@ -61,14 +54,14 @@ export default function ToDoListItem() {
         const currentState = { ...todo }
         currentState.files.splice(currentState.files.indexOf(fileName), 1);
         setTodo(currentState);
-        const fileRef = storageRef(storage, `files/${todoID}/${fileName}`);
+        const fileRef = storageRef(storage, `files/${user.uid}/${todoID}/${fileName}`);
 
-        update(ref(database, `/todo/${todoID}`), {
+        update(ref(database, `/todo/${user.uid}/${todoID}`), {
             files: currentState.files
         })
         deleteObject(fileRef);
     }
-    if (loading) return <div>Loading...</div>
+    if (loading || userLoading) return <div>Loading...</div>
     return (
         <div className='d-flex justify-content-center align-items-center mt-5'>
             <ul className="list-group">
